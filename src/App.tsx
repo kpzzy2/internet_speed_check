@@ -10,7 +10,7 @@ interface SpeedResult {
 
 function App() {
   const [apiUrl, setApiUrl] = useState(
-    import.meta.env.VITE_API_URL || "https://speedtest-worker.sdjjm95.workers.dev"
+    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "https://speedtest-worker.sdjjm95.workers.dev")
   );
   const [isEditing, setIsEditing] = useState(false);
   const [results, setResults] = useState<SpeedResult>({});
@@ -28,6 +28,9 @@ function App() {
   }, [results.download, displayValue]);
 
   const measurePing = async (url: string) => {
+    // 연결 수립 (DNS + TCP + TLS) 선처리 — 이후 측정에서 핸드셰이크 제외
+    await fetch(`${url}/ping?t=warmup`, { cache: "no-store" }).catch(() => {});
+
     const times = [];
     for (let i = 0; i < 5; i++) {
       const t = performance.now();
@@ -69,23 +72,31 @@ function App() {
 
   const measureUpload = async (url: string) => {
     const data = new Uint8Array(2 * 1024 * 1024);
-    crypto.getRandomValues(data);
+    for (let offset = 0; offset < data.byteLength; offset += 65536) {
+      crypto.getRandomValues(data.subarray(offset, offset + 65536));
+    }
     let totalBits = 0,
       totalSec = 0;
     for (let i = 0; i < 3; i++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const t = performance.now();
       try {
         await fetch(`${url}/upload?t=${Date.now()}`, {
           method: "POST",
           body: data,
           cache: "no-store",
+          signal: controller.signal,
         });
         totalSec += (performance.now() - t) / 1000;
         totalBits += data.byteLength * 8;
       } catch (e) {
         console.error("Upload failed:", e);
+      } finally {
+        clearTimeout(timeout);
       }
     }
+    if (totalSec === 0) return 0;
     return totalBits / totalSec / 1e6;
   };
 
@@ -112,6 +123,7 @@ function App() {
         setCurrentTest("업로드 속도 측정 중");
         const uploadSpeed = await measureUpload(apiUrl);
         setResults((prev) => ({ ...prev, upload: uploadSpeed }));
+        if (testType === "upload") setDisplayValue(uploadSpeed);
       }
 
       setCurrentTest("");
@@ -166,12 +178,14 @@ function App() {
                     {results.ping !== undefined && (
                       <div className="detail-item">
                         <span className="label">지연시간</span>
+                        <span className="desc">클릭 후 반응까지 걸리는 시간</span>
                         <span className="value">{results.ping.toFixed(1)} ms</span>
                       </div>
                     )}
                     {results.jitter !== undefined && (
                       <div className="detail-item">
                         <span className="label">지터</span>
+                        <span className="desc">속도가 얼마나 들쭉날쭉한지</span>
                         <span className="value">{results.jitter.toFixed(1)} ms</span>
                       </div>
                     )}
@@ -208,13 +222,6 @@ function App() {
               </button>
             </div>
 
-            <button
-              className="btn btn-secondary"
-              onClick={() => setIsEditing(true)}
-              disabled={isLoading}
-            >
-              ⚙ API 설정
-            </button>
           </div>
         </>
       ) : (

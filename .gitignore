@@ -34,5 +34,12 @@ Thumbs.db
 .tmp
 .cache
 
+# 앱인토스 CLI 캐시
+*.ait
+.granite
+
+# PNG 변환 스크립트
+scripts/
+
 # Public folder (build artifacts)
 public
