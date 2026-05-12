@@ -1,11 +1,11 @@
 import { defineConfig } from "@apps-in-toss/web-framework/config";
 
 export default defineConfig({
-  appName: "internet_speed",
+  appName: "internet-speed-check",
   brand: {
-    displayName: "앱 이름", // 화면에 노출될 앱의 한글 이름으로 바꿔주세요.
-    primaryColor: "#FD9B3C", // 화면에 노출될 앱의 기본 색상으로 바꿔주세요.
-    icon: "", // 화면에 노출될 앱의 아이콘 이미지 주소로 바꿔주세요.
+    displayName: "인터넷 속도 측정",
+    primaryColor: "#333333",
+    icon: "https://static.toss.im/appsintoss/36797/c6c66b30-b185-41f7-8ee4-2dce95ec960b.png", // 화면에 노출될 앱의 아이콘 이미지 주소로 바꿔주세요.
   },
   web: {
     host: "localhost",

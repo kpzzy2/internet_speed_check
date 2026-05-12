@@ -1,5 +1,5 @@
 {
-  "name": "internet_speed",
+  "name": "internet-speed-check",
   "private": true,
   "version": "0.1.0",
   "type": "module",

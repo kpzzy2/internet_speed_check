@@ -136,6 +136,11 @@
   font-weight: 400;
 }
 
+.detail-item .value.timeout {
+  font-size: 13px;
+  color: #999;
+}
+
 .button-area {
   width: 100%;
   max-width: 300px;
